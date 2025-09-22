@@ -1,0 +1,47 @@
+import java.time.LocalDate;
+import java.time.Period;
+import java.util.*;
+
+class Employee {
+    int empId;
+    String firstName;
+    String lastName;
+    LocalDate dob;
+    int departmentId;
+    String departmentName;
+    int youngerEmployeeCount;
+
+}
+
+public class EmployeeAgeAnalysis {
+    public static void main(String[] args) {
+        List<Employee> employees = loadEmployees(); // load employee list from DB or dataset
+        Map<Integer, String> departments = loadDepartments(); // map dept id to name
+
+      
+        for (Employee emp : employees) {
+            emp.departmentName = departments.get(emp.departmentId);
+        }
+
+    
+        for (Employee emp1 : employees) {
+            int count = 0;
+            for (Employee emp2 : employees) {
+                if (emp2.departmentId == emp1.departmentId && emp2.dob.isAfter(emp1.dob)) {
+                    count++;
+                }
+            }
+            emp1.youngerEmployeeCount = count;
+        }
+
+      
+        employees.sort((e1, e2) -> Integer.compare(e2.empId, e1.empId));
+
+        for (Employee e : employees) {
+            System.out.printf("EMP_ID: %d, Name: %s %s, Department: %s, Younger Employees: %d\n",
+                              e.empId, e.firstName, e.lastName, e.departmentName, e.youngerEmployeeCount);
+        }
+    }
+
+  
+}
