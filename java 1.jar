@@ -1,0 +1,112 @@
+import java.time.LocalDate;
+import java.time.Period;
+import java.time.format.DateTimeFormatter;
+import java.util.*;
+import java.util.stream.Collectors;
+
+class Employee {
+    int empId;
+    String firstName;
+    String lastName;
+    LocalDate dob;
+    String gender;
+    int departmentId;
+
+    public Employee(int empId, String firstName, String lastName, String dobStr, String gender, int departmentId) {
+        this.empId = empId;
+        this.firstName = firstName;
+        this.lastName = lastName;
+        this.dob = LocalDate.parse(dobStr, DateTimeFormatter.ISO_LOCAL_DATE);
+        this.gender = gender;
+        this.departmentId = departmentId;
+    }
+}
+
+class Department {
+    int departmentId;
+    String departmentName;
+
+    public Department(int id, String name) {
+        this.departmentId = id;
+        this.departmentName = name;
+    }
+}
+
+class Payment {
+    int paymentId;
+    int empId;
+    double amount;
+    LocalDate paymentDate;
+
+    public Payment(int paymentId, int empId, double amount, String paymentDateTime) {
+        this.paymentId = paymentId;
+        this.empId = empId;
+        this.amount = amount;
+        this.paymentDate = LocalDate.parse(paymentDateTime.substring(0, 10)); // extract date only
+    }
+}
+
+public class MaxSalaryNotOnFirstDay {
+
+    public static void main(String[] args) {
+   
+        List<Employee> employees = Arrays.asList(
+            new Employee(1, "John", "Williams", "1980-05-15", "Male", 3),
+            new Employee(2, "Sarah", "Johnson", "1990-07-20", "Female", 2),
+            new Employee(3, "Michael", "Smith", "1985-02-10", "Male", 3),
+            new Employee(4, "Emily", "Brown", "1992-11-30", "Female", 4),
+            new Employee(5, "David", "Jones", "1988-09-05", "Male", 5),
+            new Employee(6, "Olivia", "Davis", "1995-04-12", "Female", 1)
+        );
+
+        Map<Integer, String> deptMap = new HashMap<>();
+        deptMap.put(1, "HR");
+        deptMap.put(2, "Finance");
+        deptMap.put(3, "Engineering");
+        deptMap.put(4, "Sales");
+        deptMap.put(5, "Marketing");
+
+        List<Payment> payments = Arrays.asList(
+            new Payment(1, 2, 65784.00, "2025-01-01 13:44:12"),
+            new Payment(2, 4, 62736.00, "2025-01-06 18:36:37"),
+            new Payment(3, 1, 69437.00, "2025-01-01 10:19:21"),
+            new Payment(4, 3, 67183.00, "2025-01-02 17:21:57"),
+            new Payment(5, 2, 66273.00, "2025-02-01 11:49:15"),
+            new Payment(6, 5, 71475.00, "2025-01-01 07:24:14"),
+            new Payment(7, 1, 70837.00, "2025-02-03 19:11:31"),
+            new Payment(8, 6, 69628.00, "2025-01-02 10:41:15")
+        );
+
+        List<Payment> filteredPayments = payments.stream()
+                .filter(p -> p.paymentDate.getDayOfMonth() != 1)
+                .collect(Collectors.toList());
+        OptionalDouble maxAmountOpt = filteredPayments.stream()
+                .mapToDouble(p -> p.amount)
+                .max();
+
+        if (maxAmountOpt.isEmpty()) {
+            System.out.println("No payments found not on 1st day.");
+            return;
+        }
+
+        double maxAmount = maxAmountOpt.getAsDouble();
+
+        List<Payment> maxPayments = filteredPayments.stream()
+                .filter(p -> p.amount == maxAmount)
+                .collect(Collectors.toList());
+        for (Payment p : maxPayments) {
+            Employee emp = employees.stream()
+                    .filter(e -> e.empId == p.empId)
+                    .findFirst()
+                    .orElse(null);
+
+            if (emp == null) continue;
+
+            int age = Period.between(emp.dob, LocalDate.now()).getYears();
+            String deptName = deptMap.getOrDefault(emp.departmentId, "Unknown");
+
+            System.out.printf("SALARY: %.2f, NAME: %s %s, AGE: %d, DEPARTMENT: %s\n",
+                    p.amount, emp.firstName, emp.lastName, age, deptName);
+        }
+    }
+}
